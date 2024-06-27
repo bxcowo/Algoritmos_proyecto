@@ -1,20 +1,26 @@
-package ExcelRudimentario;
+    package ExcelRudimentario;
 
 public class Celda implements Comparable<Celda>{
     private String id;
+    private String content;
     private Double value;
     
-    public Celda(String id, Double value){
+    public Celda(String id,String content){
         this.id = id;
-        this.value = value;
+        this.content = content;
+        this.value = Double.NaN;
     }
     
     public Celda(String id){
-        this(id, 0.00);
+        this(id,"");
     }
 
     public String getId() {
         return id;
+    }
+    
+    public String getContent() {
+        return content;
     }
 
     public void setId(String id) {
@@ -27,6 +33,19 @@ public class Celda implements Comparable<Celda>{
 
     public void setValue(Double value) {
         this.value = value;
+    }
+    
+    public void setContent(String content) {
+        this.content = content;
+    }
+    
+    public boolean isNumeric() {
+        try {
+            Double.valueOf(content);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
     
     @Override
