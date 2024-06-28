@@ -1,63 +1,59 @@
-
 package ExcelRudimentario;
 
 import java.util.List;
 import java.util.Stack;
 
 public class CellInterpreter {
-    private List<Celda> celdas;
+    private final List<Celda> celdas;
 
     public CellInterpreter(List<Celda> celdas) {
         this.celdas = celdas;
     }
 
-    // Interpreta la entrada dada y retorna el resultado como un double.
     public double interpret(String input) {
         if (input.startsWith("@")) {
-            return evaluateFunction(input.substring(1)); // Evaluar funciones personalizadas
+            return evaluateFunction(input.substring(1));
         } else if (isCellReference(input)) {
-            return getCellValue(input); // Obtener el valor de una celda
+            return getCellValue(input);
         } else if (input.startsWith("+")) {
-            return getCellValue(input.substring(1)); // Manejar referencias de celdas con un '+' al inicio
+            return getCellValue(input.substring(1));
         } else if (isNumeric(input)) {
-            return Double.valueOf(input); // Convertir cadena numérica a double
+            return Double.parseDouble(input);
         } else {
-            return evaluateExpression(input); // Evaluar expresión aritmética
+            return evaluateExpression(input);
         }
     }
 
-    // Verifica si la entrada es una referencia de celda.
     private boolean isCellReference(String input) {
         return input.matches("^[A-Za-z]+\\d+$");
     }
 
-    // Evalúa funciones personalizadas como sum, max, min y avg.
     private double evaluateFunction(String function) {
         if (function.startsWith("sum(")) {
-            String[] range = function.substring(4, function.length() - 1).split("\\.\\.");
+            String[] range = function.substring(4, function.length() - 1).split(",");
             if (range.length == 2) {
-                return sumRange(range[0], range[1]); // Evaluar función de suma
+                return sumRange(range[0], range[1]);
             } else {
                 throw new IllegalArgumentException("Rango de suma no válido.");
             }
         } else if (function.startsWith("max(")) {
-            String[] range = function.substring(4, function.length() - 1).split("\\.\\.");
+            String[] range = function.substring(4, function.length() - 1).split(",");
             if (range.length == 2) {
-                return maxRange(range[0], range[1]); // Evaluar función de máximo
+                return maxRange(range[0], range[1]);
             } else {
                 throw new IllegalArgumentException("Rango de máximo no válido.");
             }
         } else if (function.startsWith("min(")) {
-            String[] range = function.substring(4, function.length() - 1).split("\\.\\.");
+            String[] range = function.substring(4, function.length() - 1).split(",");
             if (range.length == 2) {
-                return minRange(range[0], range[1]); // Evaluar función de mínimo
+                return minRange(range[0], range[1]);
             } else {
                 throw new IllegalArgumentException("Rango de mínimo no válido.");
             }
         } else if (function.startsWith("avg(")) {
-            String[] range = function.substring(4, function.length() - 1).split("\\.\\.");
+            String[] range = function.substring(4, function.length() - 1).split(",");
             if (range.length == 2) {
-                return avgRange(range[0], range[1]); // Evaluar función de promedio
+                return avgRange(range[0], range[1]);
             } else {
                 throw new IllegalArgumentException("Rango de promedio no válido.");
             }
@@ -65,7 +61,6 @@ public class CellInterpreter {
         return 0.0;
     }
 
-    // Calcula la suma de un rango de celdas.
     private double sumRange(String start, String end) {
         char startCol = start.charAt(0);
         char endCol = end.charAt(0);
@@ -75,13 +70,12 @@ public class CellInterpreter {
         for (char col = startCol; col <= endCol; col++) {
             for (int row = startRow; row <= endRow; row++) {
                 String cellId = col + String.valueOf(row);
-                sum += getCellValue(cellId); // Sumar el valor de cada celda en el rango
+                sum += getCellValue(cellId);
             }
         }
         return sum;
     }
 
-    // Calcula el valor máximo en un rango de celdas.
     private double maxRange(String start, String end) {
         char startCol = start.charAt(0);
         char endCol = end.charAt(0);
@@ -91,13 +85,12 @@ public class CellInterpreter {
         for (char col = startCol; col <= endCol; col++) {
             for (int row = startRow; row <= endRow; row++) {
                 String cellId = col + String.valueOf(row);
-                max = Math.max(max, getCellValue(cellId)); // Actualizar el máximo
+                max = Math.max(max, getCellValue(cellId));
             }
         }
         return max;
     }
 
-    // Calcula el valor mínimo en un rango de celdas.
     private double minRange(String start, String end) {
         char startCol = start.charAt(0);
         char endCol = end.charAt(0);
@@ -107,13 +100,12 @@ public class CellInterpreter {
         for (char col = startCol; col <= endCol; col++) {
             for (int row = startRow; row <= endRow; row++) {
                 String cellId = col + String.valueOf(row);
-                min = Math.min(min, getCellValue(cellId)); // Actualizar el mínimo
+                min = Math.min(min, getCellValue(cellId));
             }
         }
         return min;
     }
 
-    // Calcula el promedio de un rango de celdas.
     private double avgRange(String start, String end) {
         char startCol = start.charAt(0);
         char endCol = end.charAt(0);
@@ -124,68 +116,72 @@ public class CellInterpreter {
         for (char col = startCol; col <= endCol; col++) {
             for (int row = startRow; row <= endRow; row++) {
                 String cellId = col + String.valueOf(row);
-                sum += getCellValue(cellId); // Sumar el valor de cada celda en el rango
-                count++; // Contar el número de celdas
+                sum += getCellValue(cellId);
+                count++;
             }
         }
-        return count == 0 ? 0 : sum / count; // Calcular el promedio
+        return count == 0 ? 0 : sum / count;
     }
 
-    // Obtiene el valor de una celda dado su ID.
     private double getCellValue(String cellId) {
         for (Celda celda : celdas) {
             if (celda.getId().equals(cellId)) {
-                return Double.valueOf(celda.getContent()); // Convertir el contenido de la celda a double
+                return celda.getValue();
             }
         }
         throw new IllegalArgumentException("La celda " + cellId + " no existe.");
-    }
+}
 
-    // Evalúa una expresión aritmética respetando la jerarquía de operadores.
+
     private double evaluateExpression(String expression) {
-        // Eliminar espacios en blanco de la expresión
-        expression = expression.replaceAll("\\s", "");
+    // Eliminar espacios en blanco de la expresión
+    expression = expression.replaceAll("\\s", "");
 
-        // Pilas para valores y operadores
-        Stack<Double> values = new Stack<>();
-        Stack<Character> ops = new Stack<>();
+    // Pilas para valores y operadores
+    Stack<Double> values = new Stack<>();
+    Stack<Character> ops = new Stack<>();
 
-        for (int i = 0; i < expression.length(); i++) {
-            char ch = expression.charAt(i);
+    for (int i = 0; i < expression.length(); i++) {
+        char ch = expression.charAt(i);
 
-            // Si el carácter es un dígito, leer el número completo
-            if (Character.isDigit(ch)) {
-                StringBuilder sb = new StringBuilder();
-                while (i < expression.length() && (Character.isDigit(expression.charAt(i)) || expression.charAt(i) == '.')) {
-                    sb.append(expression.charAt(i++));
-                }
-                values.push(Double.valueOf(sb.toString())); // Agregar el número a la pila de valores
-                i--; // Retroceder un paso porque el bucle for también incrementa i
-            } else if (ch == '(') {
-                ops.push(ch); // Agregar '(' a la pila de operadores
-            } else if (ch == ')') {
-                while (ops.peek() != '(') {
-                    values.push(applyOp(ops.pop(), values.pop(), values.pop())); // Aplicar operadores dentro de los paréntesis
-                }
-                ops.pop(); // Descartar '('
-            } else if (ch == '+' || ch == '-' || ch == '*' || ch == '/') {
-                while (!ops.isEmpty() && hasPrecedence(ch, ops.peek())) {
-                    values.push(applyOp(ops.pop(), values.pop(), values.pop())); // Aplicar operadores según la precedencia
-                }
-                ops.push(ch); // Agregar el operador a la pila
+        // Si el carácter es un dígito o una letra (referencia de celda), leer el número completo o referencia
+        if (Character.isDigit(ch) || Character.isLetter(ch)) {
+            StringBuilder sb = new StringBuilder();
+            while (i < expression.length() && (Character.isDigit(expression.charAt(i)) || 
+                    Character.isLetter(expression.charAt(i)) || expression.charAt(i) == '.')) {
+                sb.append(expression.charAt(i++));
             }
+            if (isCellReference(sb.toString())) {
+                values.push(getCellValue(sb.toString())); // Obtener valor de la celda
+            } else {
+                values.push(Double.valueOf(sb.toString())); // Agregar el número a la pila de valores
+            }
+            i--; // Retroceder un paso porque el bucle for también incrementa i
+        } else if (ch == '(') {
+            ops.push(ch); // Agregar '(' a la pila de operadores
+        } else if (ch == ')') {
+            while (ops.peek() != '(') {
+                values.push(applyOp(ops.pop(), values.pop(), values.pop())); // Aplicar operadores dentro de los paréntesis
+            }
+            ops.pop(); // Descartar '('
+        } else if (ch == '+' || ch == '-' || ch == '*' || ch == '/') {
+            while (!ops.isEmpty() && hasPrecedence(ch, ops.peek())) {
+                values.push(applyOp(ops.pop(), values.pop(), values.pop())); // Aplicar operadores según la precedencia
+            }
+            ops.push(ch); // Agregar el operador a la pila
         }
-
-        // Aplicar el resto de los operadores a los valores
-        while (!ops.isEmpty()) {
-            values.push(applyOp(ops.pop(), values.pop(), values.pop()));
-        }
-
-        // El valor en la parte superior de la pila de valores es el resultado
-        return values.pop();
     }
 
-    // Verifica si el operador1 tiene precedencia sobre el operador2.
+    // Aplicar el resto de los operadores a los valores
+    while (!ops.isEmpty()) {
+        values.push(applyOp(ops.pop(), values.pop(), values.pop()));
+    }
+
+    // El valor en la parte superior de la pila de valores es el resultado
+    return values.pop();
+}
+
+
     private boolean hasPrecedence(char op1, char op2) {
         if (op2 == '(' || op2 == ')') {
             return false;
@@ -196,7 +192,6 @@ public class CellInterpreter {
         return true;
     }
 
-    // Aplica el operador 'op' a los operandos 'a' y 'b'.
     private double applyOp(char op, double b, double a) {
         switch (op) {
             case '+':
@@ -214,7 +209,6 @@ public class CellInterpreter {
         return 0;
     }
 
-    // Verifica si una cadena es numérica.
     private boolean isNumeric(String str) {
         try {
             Double.valueOf(str);
