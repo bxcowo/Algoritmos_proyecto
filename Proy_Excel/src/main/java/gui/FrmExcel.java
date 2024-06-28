@@ -92,6 +92,7 @@ public class FrmExcel extends javax.swing.JFrame {
         jLTitle.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         jLTitle.setText("Hoja de cálculos");
 
+        jTExcel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         jTExcel.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {"A", "", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null},
@@ -116,6 +117,8 @@ public class FrmExcel extends javax.swing.JFrame {
             }
         });
         jTExcel.setToolTipText("");
+        jTExcel.setDoubleBuffered(true);
+        jTExcel.setFillsViewportHeight(true);
         jTExcel.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jTExcel.setShowGrid(false);
         jTExcel.setShowHorizontalLines(true);
@@ -163,6 +166,11 @@ public class FrmExcel extends javax.swing.JFrame {
         jBActualizar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jBActualizarActionPerformed(evt);
+            }
+        });
+        jBActualizar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                jBActualizarKeyPressed(evt);
             }
         });
 
@@ -302,43 +310,48 @@ public class FrmExcel extends javax.swing.JFrame {
     private void jBCalcularMouseClicked(java.awt.event.MouseEvent evt) {                                        
         calcular();
     }                                       
+   private void actualizar() {
+    int rowCount = jTExcel.getRowCount();
+    int columnCount = jTExcel.getColumnCount();
 
-    private void jBActualizarActionPerformed(java.awt.event.ActionEvent evt) {                                             
-        int rowCount = jTExcel.getRowCount();
-        int columnCount = jTExcel.getColumnCount();
+    initializeCellInterpreter();
+    for (int i = 0; i < rowCount; i++) {
+        for (int j = 1; j < columnCount; j++) {
+            Object value = jTExcel.getValueAt(i, j);
+            String id = jTExcel.getValueAt(i, 0) + Integer.toString(j); // Crear el id (A1, B2, etc.)
 
-        for (int i = 0; i < rowCount; i++) {
-            for (int j = 1; j < columnCount; j++) {
-                Object value = jTExcel.getValueAt(i, j);
-                String id = jTExcel.getValueAt(i, 0) + Integer.toString(j); // Crear el id (A1, B2, etc.)
-
-                Vertex<Celda> celdaVertex = hojaCalculo.getCelda(id);
-                if (celdaVertex != null) {
-                    Celda celda = celdaVertex.getValue();
-                    if (value != null && !value.toString().isEmpty()) {
-                        try {
-                            double val = Double.valueOf(value.toString());
-                            celda.setValue(val);
-                            celda.setContent(value.toString());
-                        } catch (NumberFormatException e) {
-                            JOptionPane.showMessageDialog(this, "Valor inválido en la celda: " + id, "Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    } else {
-                        celda.setValue(0.00);
-                        celda.setContent("");
+            Vertex<Celda> celdaVertex = hojaCalculo.getCelda(id);
+            if (celdaVertex != null) {
+                Celda celda = celdaVertex.getValue();
+                if (value != null && !value.toString().isEmpty()) {
+                    try {
+                        String content = value.toString();
+                        celda.setContent(content);
+                        double result = cellInterpreter.interpret(content);
+                        celda.setValue(result);
+                        jTExcel.setValueAt(result, i, j);
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(this, "Error en la celda: " + id + " - " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
+                } else {
+                    celda.setValue(0.00);
+                    celda.setContent("");
                 }
             }
         }
+    }
 
-        // Imprimir los valores almacenados en el grafo para verificación
-        for (Vertex<Celda> vertex : hojaCalculo.getHoja().getVertices()) {
-            Celda celda = vertex.getValue();
-            System.out.println("Celda ID: " + celda.getId() + ", Valor: " + celda.getValue());
-        }
+    // Imprimir los valores almacenados en el grafo para verificación
+    for (Vertex<Celda> vertex : hojaCalculo.getHoja().getVertices()) {
+        Celda celda = vertex.getValue();
+        System.out.println("Celda ID: " + celda.getId() + ", Valor: " + celda.getValue());
+    }
 
-        // Reinicializar el CellInterpreter con las celdas actualizadas
-        initializeCellInterpreter();
+    // Reinicializar el CellInterpreter con las celdas actualizadas
+    
+}
+    private void jBActualizarActionPerformed(java.awt.event.ActionEvent evt) {                                             
+        actualizar();
     }                                            
 
     private void jBLimpiarTablaActionPerformed(java.awt.event.ActionEvent evt) {                                               
@@ -390,6 +403,10 @@ public class FrmExcel extends javax.swing.JFrame {
     private void jBCalcularKeyPressed(java.awt.event.KeyEvent evt) {                                      
         calcular();
     }                                     
+
+    private void jBActualizarKeyPressed(java.awt.event.KeyEvent evt) {                                        
+        actualizar();
+    }                                       
 
     /**
      * @param args the command line arguments
